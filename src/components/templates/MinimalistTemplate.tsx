@@ -9,7 +9,7 @@ export const MinimalistTemplate = ({ data }: MinimalistTemplateProps) => {
   const { personalData, profilSingkat, pendidikan, pengalaman, skills, sertifikat } = data;
 
   return (
-    <div className="bg-white text-gray-900 p-8 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm leading-relaxed">
+    <div className="bg-white text-gray-900 p-8 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm leading-relaxed" style={{ width: '210mm', maxWidth: '210mm' }}>
       {/* Header */}
       <header className="mb-6 pb-4 border-b-2 border-gray-800">
         <div className="flex items-start gap-4">

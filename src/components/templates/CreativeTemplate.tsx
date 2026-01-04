@@ -9,7 +9,7 @@ export const CreativeTemplate = ({ data }: CreativeTemplateProps) => {
   const { personalData, profilSingkat, pendidikan, pengalaman, skills, sertifikat } = data;
 
   return (
-    <div className="bg-white text-gray-900 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm flex">
+    <div className="bg-white text-gray-900 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm flex" style={{ width: '210mm', maxWidth: '210mm' }}>
       {/* Sidebar */}
       <aside className="w-1/3 bg-gradient-to-b from-violet-600 to-purple-700 text-white p-5">
         {/* Photo */}

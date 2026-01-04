@@ -9,7 +9,7 @@ export const ModernTemplate = ({ data }: ModernTemplateProps) => {
   const { personalData, profilSingkat, pendidikan, pengalaman, skills, sertifikat } = data;
 
   return (
-    <div className="bg-white text-gray-900 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm">
+    <div className="bg-white text-gray-900 min-h-[297mm] w-full max-w-[210mm] mx-auto font-sans text-sm" style={{ width: '210mm', maxWidth: '210mm' }}>
       {/* Header with blue accent */}
       <header className="bg-blue-600 text-white p-6 pb-8">
         <div className="flex items-start gap-4">

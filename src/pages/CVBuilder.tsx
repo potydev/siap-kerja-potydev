@@ -11,7 +11,7 @@ import { SkillsStep } from '@/components/builder/steps/SkillsStep';
 import { CertificateStep } from '@/components/builder/steps/CertificateStep';
 import { CVPreview } from '@/components/templates/CVPreview';
 import { useCVData } from '@/hooks/useCVData';
-import { ArrowLeft, ArrowRight, Download, Eye, EyeOff, FileText, RotateCcw } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Eye, EyeOff, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -50,24 +50,127 @@ const CVBuilder = () => {
 
     try {
       const element = previewRef.current;
-      const canvas = await html2canvas(element, {
+      
+      // Get the actual CV template content (child of previewRef)
+      const contentElement = element.firstElementChild as HTMLElement;
+      if (!contentElement) {
+        throw new Error('Content element not found');
+      }
+
+      // Create a temporary container for PDF generation (off-screen)
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '210mm';
+      tempContainer.style.height = 'auto';
+      tempContainer.style.backgroundColor = '#ffffff';
+      tempContainer.style.zIndex = '-1';
+      tempContainer.style.overflow = 'visible';
+      
+      // Clone the content deeply
+      const clone = contentElement.cloneNode(true) as HTMLElement;
+      
+      // Reset all transforms and set proper dimensions for the clone
+      clone.style.transform = 'none !important';
+      clone.style.width = '210mm';
+      clone.style.maxWidth = '210mm';
+      clone.style.minWidth = '210mm';
+      clone.style.margin = '0';
+      clone.style.padding = '0';
+      clone.style.position = 'relative';
+      clone.style.left = '0';
+      clone.style.top = '0';
+      clone.style.boxSizing = 'border-box';
+      
+      // Remove any transforms from all nested elements
+      const allElements = clone.querySelectorAll('*');
+      allElements.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        if (htmlEl.style.transform && htmlEl.style.transform !== 'none') {
+          htmlEl.style.transform = 'none';
+        }
+      });
+      
+      tempContainer.appendChild(clone);
+      document.body.appendChild(tempContainer);
+
+      // Wait for layout recalculation and images to load
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Calculate dimensions in pixels (1mm ≈ 3.779527559 pixels at 96 DPI)
+      const mmToPx = 3.779527559;
+      const widthPx = 210 * mmToPx;
+      
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
         backgroundColor: '#ffffff',
+        logging: false,
+        width: widthPx,
+        height: clone.scrollHeight,
+        windowWidth: widthPx,
+        windowHeight: clone.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Ensure all styles are preserved and transforms removed in cloned document
+          const clonedRoot = clonedDoc.body.firstElementChild as HTMLElement;
+          if (clonedRoot) {
+            clonedRoot.style.width = '210mm';
+            clonedRoot.style.maxWidth = '210mm';
+            clonedRoot.style.transform = 'none';
+            clonedRoot.style.margin = '0';
+            clonedRoot.style.padding = '0';
+          }
+          
+          // Remove transforms from all elements in cloned document
+          const allClonedElements = clonedDoc.querySelectorAll('*');
+          allClonedElements.forEach((el) => {
+            const htmlEl = el as HTMLElement;
+            if (htmlEl.style.transform && htmlEl.style.transform !== 'none') {
+              htmlEl.style.transform = 'none';
+            }
+          });
+        },
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      // Remove temporary container
+      document.body.removeChild(tempContainer);
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
+        compress: true,
       });
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // A4 dimensions in mm
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      // If content is taller than one page, split into multiple pages
+      if (imgHeight > pdfHeight) {
+        let heightLeft = imgHeight;
+        let position = 0;
+        const pageHeight = pdfHeight;
+
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Add additional pages if needed
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+      } else {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      }
 
       const fileName = cvData.personalData.namaLengkap
         ? `CV_${cvData.personalData.namaLengkap.replace(/\s+/g, '_')}_SiapKerja.pdf`
@@ -154,9 +257,11 @@ const CVBuilder = () => {
             >
               <ArrowLeft className="w-4 h-4" />
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                  <FileText className="w-4 h-4 text-primary-foreground" />
-                </div>
+                <img 
+                  src="/logo-poty.png" 
+                  alt="SiapKerja Logo" 
+                  className="w-8 h-8 rounded-lg object-cover"
+                />
                 <span className="font-bold text-foreground hidden sm:inline">SiapKerja</span>
               </div>
             </button>
