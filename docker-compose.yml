@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "3001:80"
     container_name: siap-kerja-web
     restart: unless-stopped
     environment:
